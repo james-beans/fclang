@@ -8,7 +8,7 @@ fclang / fclang++ is licensed under the [MPLv2](./LICENSE).
 
 ## Usage
 ### Requirements
-- An external device with [Clang](https://clang.llvm.org/), (LLD)[https://lld.llvm.org/] and [LLVM](https://llvm.org/) on it.
+- An external device with [Clang](https://clang.llvm.org/), [LLD](https://lld.llvm.org/) and [LLVM](https://llvm.org/) on it.
 - A Linux (any), OpenBSD / NetBSD / FreeBSD or MacOS system. (Not Windows)
 - [GNU make](https://www.gnu.org/software/make/)
 - A Kindle device.
