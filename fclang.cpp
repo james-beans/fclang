@@ -14,8 +14,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
-#include <memory>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -23,8 +23,8 @@
 #if defined(__APPLE__)
   #include <mach-o/dyld.h>
 #elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
-  #include <sys/types.h>
   #include <sys/sysctl.h>
+  #include <sys/types.h>
 #elif defined(__linux__)
   #include <unistd.h>
 #else
@@ -33,14 +33,14 @@
 
 #include <sys/wait.h>
 
+using std::array;
 using std::string;
 using std::string_view;
 using std::stringstream;
-using std::array;
 using std::unique_ptr;
 
-using std::cout;
 using std::cerr;
+using std::cout;
 
 namespace fs = std::filesystem;
 
@@ -52,20 +52,18 @@ namespace fclang {
   void detect_color_mode() {
     g_IsColorSupported = true;
     const char* no_color = getenv("NO_COLOR");
-    if (no_color != nullptr && no_color[0] != '\0') {
-      g_IsColorSupported = false;
-    }
+    if (no_color != nullptr && no_color[0] != '\0') { g_IsColorSupported = false; }
   }
 
   void detect_compiler_mode(string_view program_name) {
-    // If compiled explicitly with a C++ flag, force it true
-    // Otherwise, inspect argv[0] dynamically at runtime
-    #ifdef FCLANG_FORCE_CPP
-      (void)program_name;
-      g_IsCpp = true;
-    #else
-      g_IsCpp = (program_name.find("++") != string_view::npos);
-    #endif
+// If compiled explicitly with a C++ flag, force it true
+// Otherwise, inspect argv[0] dynamically at runtime
+#ifdef FCLANG_FORCE_CPP
+    (void)program_name;
+    g_IsCpp = true;
+#else
+    g_IsCpp = (program_name.find("++") != string_view::npos);
+#endif
   }
 
   string get_color_flag() {
@@ -99,9 +97,7 @@ namespace fclang {
     string item;
     while (getline(ss, item, path_sep)) {
       fs::path full_path = fs::path(item) / filename;
-      if (fs::exists(full_path)) {
-        return full_path.parent_path().string();
-      }
+      if (fs::exists(full_path)) { return full_path.parent_path().string(); }
     }
 
     return ""; // Placeholder
@@ -114,7 +110,8 @@ namespace fclang {
     if (argv != nullptr && argv[0] != '\0') {
       fs::path p(argv);
       // Wtf? Why so long? -_-
-      if (p.has_relative_path() && (string(argv).find('/') != string::npos || string(argv).find('\\') != string::npos)) {
+      if (p.has_relative_path() &&
+          (string(argv).find('/') != string::npos || string(argv).find('\\') != string::npos)) {
         // Use lexically_normal() to clean up any ./ components taking parent_path
         return fs::absolute(p).lexically_normal().parent_path().string();
       }
@@ -124,21 +121,15 @@ namespace fclang {
 #if defined(__APPLE__)
     char buffer[1024];
     uint32_t size = sizeof(buffer);
-    if (_NSGetExecutablePath(buffer, &size) == 0) {
-      path_str = buffer;
-    }
+    if (_NSGetExecutablePath(buffer, &size) == 0) { path_str = buffer; }
 #elif defined(__FreeBSD__) || defined(__NetBSD__)
-    int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 }; // Men In Black 4?
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1}; // Men In Black 4?
     char buffer[1024];
     size_t size = sizeof(buffer);
-    if (sysctl(mib, 4, buffer, &size, NULL, 0) == 0) {
-      path_str = buffer;
-    }
+    if (sysctl(mib, 4, buffer, &size, NULL, 0) == 0) { path_str = buffer; }
 #elif defined(__OpenBSD__)
     char buffer[1024];
-    if (getexecpath(buffer, sizeof(buffer)) == 0) {
-      path_str = buffer;
-    }
+    if (getexecpath(buffer, sizeof(buffer)) == 0) { path_str = buffer; }
 #elif defined(__linux__)
     char buffer[1024];
     ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
@@ -148,14 +139,10 @@ namespace fclang {
     }
 #endif
 
-    if (!path_str.empty()) {
-      return fs::path(path_str).lexically_normal().parent_path().string();
-    }
+    if (!path_str.empty()) { return fs::path(path_str).lexically_normal().parent_path().string(); }
 
     // Last resort fallback to environment PATH scan
-    if (argv != nullptr && argv[0] != '\0') {
-      return find_in_path(argv);
-    }
+    if (argv != nullptr && argv[0] != '\0') { return find_in_path(argv); }
 
     return ""; // Fallback
   }
@@ -184,9 +171,7 @@ namespace fclang {
       return ""; // Placeholder
     }
 
-    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
-      result += buffer.data();
-    }
+    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) { result += buffer.data(); }
 
     int status = pclose(pipe);
     if (WIFEXITED(status)) { // How the hell did you find a wife in the first place?
@@ -276,19 +261,19 @@ int main(int argc, char* argv[]) {
       if (target_val == "legacy" || target_val == "kindle-legacy") {
         default_target = "armv7-unknown-linux-gnueabi";
 
-      // Kindle Paperwhite 3, Oasis 1 (i.MX6)
+        // Kindle Paperwhite 3, Oasis 1 (i.MX6)
       } else if (target_val == "pw3" || target_val == "kindle-pw3") {
         default_target = "armv7-unknown-linux-gnueabihf";
 
-      // Kindle Paperwhite 4-5, 10-11
+        // Kindle Paperwhite 4-5, 10-11
       } else if (target_val == "modern" || target_val == "kindle-modern") {
         default_target = "armv7-unknown-linux-gnueabi";
 
-      // Kindle Scribe (2022/2024), Colorsoft
+        // Kindle Scribe (2022/2024), Colorsoft
       } else if (target_val == "scribe" || target_val == "kindle-scribe") {
         default_target = "aarch64-unknown-linux-gnu";
 
-      // Kindle Keyboard, Touch, 4-5
+        // Kindle Keyboard, Touch, 4-5
       } else if (target_val == "old" || target_val == "kindle-old") {
         default_target = "arm-unknown-linux-gnueabi";
 
@@ -308,19 +293,19 @@ int main(int argc, char* argv[]) {
       if (target_val == "legacy" || target_val == "kindle-legacy") {
         default_target = "armv7-unknown-linux-gnueabi";
 
-      // Kindle Paperwhite 3, Oasis 1 (i.MX6)
+        // Kindle Paperwhite 3, Oasis 1 (i.MX6)
       } else if (target_val == "pw3" || target_val == "kindle-pw3") {
         default_target = "armv7-unknown-linux-gnueabihf";
 
-      // Kindle Paperwhite 4-5, 10-11
+        // Kindle Paperwhite 4-5, 10-11
       } else if (target_val == "modern" || target_val == "kindle-modern") {
         default_target = "armv7-unknown-linux-gnueabi";
 
-      // Kindle Scribe (2022/2024), Colorsoft
+        // Kindle Scribe (2022/2024), Colorsoft
       } else if (target_val == "scribe" || target_val == "kindle-scribe") {
         default_target = "aarch64-unknown-linux-gnu";
 
-      // Kindle Keyboard, Touch, 4-5
+        // Kindle Keyboard, Touch, 4-5
       } else if (target_val == "old" || target_val == "kindle-old") {
         default_target = "arm-unknown-linux-gnueabi";
 
@@ -354,9 +339,7 @@ int main(int argc, char* argv[]) {
   }
   fclang::replace_all(output, "CLANG", "FCLANG");
 
-  if (!output.empty()) {
-    cerr << output;
-  }
+  if (!output.empty()) { cerr << output; }
 
   return exit_code;
 }
