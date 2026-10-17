@@ -15,7 +15,7 @@ fclang / fclang++ is licensed under the [MPLv2](./LICENSE).
 - A USB connector cable.
 - A method to connect your kindle as a drive to your device. (Preferably mounted to `/mnt/us/` as shown in the example)
 > [!WARNING]
-> On Debian / Ubuntu latest and most other systems, fclang / fclang++ will fail to build without the right architectures installed. To fix these issues, try installing the correct packages:
+> On Debian / Ubuntu latest and most other systems, fclang / fclang++ will fail to build without the right architectures installed. To fix these issues, try installing the correct packages. For example with apt (Debian / Ubuntu):
 ```bash
 # For 'old' / 'kindle-old' (Kindle Keyboard, Touch, 4-5)
 sudo dpkg --add-architecture armel
