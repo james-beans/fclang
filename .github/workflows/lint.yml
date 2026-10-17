@@ -1,0 +1,57 @@
+name: Lint and Format
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install clang-format
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 22
+          sudo apt install -y clang-format-22
+          clang-format-22 --version
+          rm llvm.sh
+
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Format files
+        run: find . \( -name "*.hpp" -o -name "*.cpp" -o -name "*.h" -o -name "*.c" \) -not -path "./.git/*" -exec clang-format-22 -i {} +
+
+      - name: Configure Git Identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Set dynamic commit message env
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: echo "COMMIT_TITLE=[$(TZ='Europe/London' date "+%Y/%m/%d %H:%M:%S auto")]" >> $GITHUB_ENV
+
+      - name: Commit formatting changes
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: |
+          git status
+          if [[ -n $(git status --porcelain) ]]; then
+            git add .
+            git commit -m "${{ env.COMMIT_TITLE }}" -m "- Linted last commits latest version."
+
+            git pull --rebase origin main
+            git push origin HEAD:main
+          else
+            echo "No changes to lint."
+          fi

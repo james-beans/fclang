@@ -1,0 +1,48 @@
+name: Sync configs from james-beans/james-beans
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Download latest config files
+        run: |
+          curl -o .clang-format https://raw.githubusercontent.com/james-beans/james-beans/refs/heads/main/.clang-format
+
+      - name: Configure Git Identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Set dynamic commit message env
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+        run: echo "COMMIT_TITLE=[$(TZ='Europe/London' date "+%Y/%m/%d %H:%M:%S auto")]" >> $GITHUB_ENV
+
+      - name: Commit formatting changes
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+        run: |
+          git status
+          if [[ -n $(git status --porcelain) ]]; then
+            git add .
+            git commit -m "${{ env.COMMIT_TITLE }}" -m "- Synced config files from 'james-beans/james-beans'"
+
+            git pull --rebase origin main
+            git push origin HEAD:main
+          else
+            echo "No syncs needed."
+          fi

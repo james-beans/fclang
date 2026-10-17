@@ -1,0 +1,10 @@
+# Binaries
+fclang
+fclang++
+
+# Example files
+test
+hello
+
+file.c
+file.cpp
